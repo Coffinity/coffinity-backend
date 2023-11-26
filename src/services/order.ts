@@ -7,27 +7,46 @@ export async function createOrder(userId: string, input: ICreateOrderDTO) {
   const { items } = input;
   let total = 0;
 
-  const orderItems = await Promise.all(
-    items.map(async (item) => {
-      const product = await ProductModel.findById(item.productId);
-      if (!product) {
-        throw new Error(`Product with ID ${item.productId} not found`);
-      }
-      total += product.price * item.quantity;
+  const productIdArr = items.map((item) => {
+    return item.productId;
+  });
 
+  const productList = await ProductModel.find({ _id: { $in: productIdArr } });
+  const productDetail = productList.map((product) => {
+    return {
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      image: product.image,
+      price: product.price,
+      quantity: 0,
+    };
+  });
+
+  productDetail.map((product) => {
+    items.map((item) => {
+      if (item.productId === product.id) {
+        product.quantity = item.quantity;
+        total += product.price * product.quantity;
+      }
+    });
+  });
+  try {
+    const newOrder = productDetail.map((item) => {
       return {
-        name: product.name,
-        description: product.description,
-        image: product.image,
-        price: product.price,
+        name: item.name,
+        description: item.description,
+        image: item.image,
+        price: item.price,
         quantity: item.quantity,
       };
-    })
-  );
-
-  const newOrder = { userId, total: total, items: orderItems };
-  try {
-    const order = await OrderModel.create(newOrder);
+    });
+    const orderResult = {
+      userId: userId,
+      total: total,
+      items: newOrder,
+    };
+    const order = await OrderModel.create(orderResult);
     return order;
   } catch (err) {
     throw err;
