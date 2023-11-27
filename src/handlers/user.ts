@@ -10,6 +10,7 @@ import "dotenv/config";
 import { sign } from "jsonwebtoken";
 import { IAddItemToCartDTO } from "../dto/cart";
 import { AuthStatus } from "../middleware/jwt";
+import { getProductById } from "../services/product";
 
 export const registrationHandler: RequestHandler<
   undefined,
@@ -21,7 +22,7 @@ export const registrationHandler: RequestHandler<
     return res.status(201).json({ id: _id, username, email, createdAt });
   } catch (err) {
     if (err instanceof Error) {
-      return res.status(409).json({ message: err.message });
+      return res.status(400).json({ message: err.message });
     }
     return res.status(500).json({ message: "internal server error" });
   }
@@ -55,7 +56,7 @@ export const loginHandler: RequestHandler<
     return res.status(201).json({ accessToken: accessToken }).end();
   } catch (err) {
     if (err instanceof Error) {
-      return res.status(409).json({ message: err.message });
+      return res.status(400).json({ message: err.message });
     }
     return res.status(500).json({ message: "internal server error" });
   }
@@ -72,13 +73,17 @@ export const updateCartHandler: RequestHandler<
     const userId = res.locals.user.id;
 
     const { productId, quantity } = req.body;
+    const product = await getProductById(productId);
+    if (!product) {
+      throw new Error("product not found !");
+    }
     const result = await updateCart(userId, productId, quantity);
     console.log(result);
 
     return res.status(200).json({ message: "success" });
   } catch (err) {
     if (err instanceof Error) {
-      return res.status(409).json({ message: err.message });
+      return res.status(400).json({ message: err.message });
     }
     return res.status(500).json({ message: "internal server error" });
   }
@@ -99,7 +104,7 @@ export const getCartHandler: RequestHandler<
     return res.status(409).json(result?.toJSON());
   } catch (err) {
     if (err instanceof Error) {
-      return res.status(409).json({ message: err.message });
+      return res.status(400).json({ message: err.message });
     }
     return res.status(500).json({ message: "internal server error" });
   }

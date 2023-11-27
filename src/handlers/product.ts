@@ -7,10 +7,12 @@ import {
 } from "../dto/product";
 import {
   createProduct,
+  deleteProduct,
   getAllProducts,
   getProductById,
 } from "../services/product";
 import cloudinary from "../utils/cloudinary";
+import { AuthStatus } from "../middleware/jwt";
 
 export const createProductHandler: RequestHandler<
   undefined,
@@ -38,9 +40,9 @@ export const createProductHandler: RequestHandler<
         return res.status(201).json(productsResponse).end();
       }
     }
-  } catch (err) {
-    if (err instanceof Error) {
-      return res.status(409).json({ message: err.message });
+  } catch (error) {
+    if (error instanceof Error) {
+      return res.status(400).json({ message: error.message });
     }
     return res.status(500).json({ message: "internal server error" });
   }
@@ -56,9 +58,9 @@ export const getAllProductsHandler: RequestHandler<
       return toProductDTO(product);
     });
     return res.status(200).json(productsResponse).end();
-  } catch (err) {
-    if (err instanceof Error) {
-      return res.status(409).json({ message: err.message });
+  } catch (error) {
+    if (error instanceof Error) {
+      return res.status(400).json({ message: error.message });
     }
     return res.status(500).json({ message: "internal server error" });
   }
@@ -76,42 +78,35 @@ export const getProductHandler: RequestHandler<
     }
     const productResponse = toProductDTO(product);
     return res.status(200).json(productResponse).end();
-  } catch (err) {
-    if (err instanceof Error) {
-      return res.status(409).json({ message: err.message });
+  } catch (error) {
+    if (error instanceof Error) {
+      return res.status(400).json({ message: error.message });
     }
     return res.status(500).json({ message: "internal server error" });
   }
 };
 
-// export const updateProductHandler: RequestHandler<
-//   { id: string },
-//   IProductDTO | { message: string },
-//   IUpdateProductDTO
-// > = async (req, res) => {
-//   const { name, description, image, price, stockQuantity, type } = req.body
-//   try {
+export const deleteProductHandler: RequestHandler<
+  { id: string },
+  { message: string },
+  undefined,
+  {},
+  AuthStatus
+> = async (req, res) => {
+  const id = req.params.id;
+  const isAdmin = res.locals.user.isAdmin;
+  console.log(isAdmin);
 
-//   } catch (error) {
-
-//   }
-// };
-
-// try {
-//   const { _id, name, description, image, sku, createdAt, updatedAt } =
-//     await createProduct(req.body);
-//   return res.status(201).json({
-//     id: _id.toString(),
-//     name,
-//     description,
-//     image,
-//     sku,
-//     createdAt,
-//     updatedAt,
-//   });
-// } catch (err) {
-//   if (err instanceof Error) {
-//     return res.status(409).json({ message: err.message });
-//   }
-//   return res.status(500).json({ message: "internal server error" });
-// }
+  if (isAdmin) {
+    try {
+      await deleteProduct(id);
+      return res.status(200).json({ message: "success" }).end();
+    } catch (error) {
+      if (error instanceof Error) {
+        return res.status(400).json({ message: error.message });
+      }
+      return res.status(500).json({ message: "internal server error" });
+    }
+  }
+  return res.status(403).json({ message: "Forbidden" }).end();
+};

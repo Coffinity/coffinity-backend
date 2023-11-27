@@ -10,6 +10,7 @@ import {
 } from "./handlers/user";
 import {
   createProductHandler,
+  deleteProductHandler,
   getAllProductsHandler,
   getProductHandler,
 } from "./handlers/product";
@@ -56,6 +57,7 @@ app.use("/products", productRouter);
 productRouter.post("/", createProductHandler);
 productRouter.get("/", getAllProductsHandler);
 productRouter.get("/:id", getProductHandler);
+productRouter.delete("/:id", jwtMiddleware.auth, deleteProductHandler);
 
 DBConnect()
   .then(() => {

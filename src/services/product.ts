@@ -46,3 +46,11 @@ export async function updateProduct(
     throw error;
   }
 }
+
+export async function deleteProduct(productId: string) {
+  try {
+    await ProductModel.deleteOne({ _id: productId });
+  } catch (error) {
+    throw error;
+  }
+}
