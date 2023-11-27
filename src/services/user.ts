@@ -12,6 +12,18 @@ export async function createUser(input: ICreateUserDTO) {
   }
 }
 
+export async function findByUserId(userId: string) {
+  try {
+    const user = await UserModel.findById({ _id: userId });
+    if (!user) {
+      throw new Error("username not found");
+    }
+    return user;
+  } catch (error) {
+    throw error;
+  }
+}
+
 export async function findByUsername(username: string) {
   try {
     const user = await UserModel.findOne({ username: username });

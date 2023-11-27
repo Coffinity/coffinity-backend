@@ -2,6 +2,7 @@ import { RequestHandler, Response } from "express";
 import { IAccessToken, ICreateUserDTO, ILogin, IUserDTO } from "../dto/user";
 import {
   createUser,
+  findByUserId,
   findByUsername,
   getUserCart,
   updateCart,
@@ -54,9 +55,34 @@ export const loginHandler: RequestHandler<
       }
     );
     return res.status(201).json({ accessToken: accessToken }).end();
-  } catch (err) {
-    if (err instanceof Error) {
-      return res.status(400).json({ message: err.message });
+  } catch (error) {
+    if (error instanceof Error) {
+      return res.status(400).json({ message: error.message });
+    }
+    return res.status(500).json({ message: "internal server error" });
+  }
+};
+
+export const getUserInfo: RequestHandler<
+  {},
+  IUserDTO | { message: string },
+  undefined,
+  {},
+  AuthStatus
+> = async (req, res) => {
+  const userId = res.locals.user.id;
+  try {
+    const user = await findByUserId(userId);
+    const uerResponse: IUserDTO = {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      createdAt: user.createdAt,
+    };
+    return res.status(200).json(uerResponse).end();
+  } catch (error) {
+    if (error instanceof Error) {
+      return res.status(400).json({ message: error.message });
     }
     return res.status(500).json({ message: "internal server error" });
   }

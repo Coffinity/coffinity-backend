@@ -4,6 +4,7 @@ import "dotenv/config";
 import cors from "cors";
 import {
   getCartHandler,
+  getUserInfo,
   loginHandler,
   registrationHandler,
   updateCartHandler,
@@ -48,6 +49,7 @@ userRouter.post("/", registrationHandler);
 
 //Mine
 app.use("/mine", mineRouter);
+mineRouter.get("/info", jwtMiddleware.auth, getUserInfo);
 mineRouter.put("/carts", jwtMiddleware.auth, updateCartHandler);
 mineRouter.get("/carts", jwtMiddleware.auth, getCartHandler);
 mineRouter.post("/orders", jwtMiddleware.auth, createOrderHandler);
