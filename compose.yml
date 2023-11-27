@@ -1,0 +1,62 @@
+version: "3.8"
+services:
+  # webpage:
+  #   build:
+  #     context: ./cohort2-learnhub-vite
+  #     target: builder
+  #     args:
+  #       - VITE_API_HOST=http://localhost:8080
+  #   ports:
+  #     - 5173:5173
+  #   volumes:
+  #     - ./cohort2-learnhub-vite/src:/app/src
+  #   command: ["pnpm", "dev", "--host", "0.0.0.0"]
+  api:
+    image: ${DOCKERHUB_USERNAME}/${PROJECT_NAME}-api:0.0.1
+    secrets:
+      - source: node-env
+        target: /app/.env
+    ports:
+      - 8080:8080
+    # `depends_on` tells Docker Compose to start the database before your application.
+    depends_on:
+      db:
+        condition: service_started
+  db:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: coffinity
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/db-password
+    expose:
+      - 27017
+    volumes:
+      - db-data:/data/db
+    secrets:
+      - db-password
+  deployer:
+    image: cloudiana/compose-deployment:0.0.5
+    ports:
+      - 3000:3000
+    environment:
+      - CD_HOST_COMPOSE_WORKING_DIR=${PRODUCTION_DIR}
+      - CD_DEPLOY_INTERVAL_SECONDS=30
+    env_file:
+      - .env.prod
+    volumes:
+      - .env.prod:${PRODUCTION_DIR}/.env.prod
+      - ./compose.yml:/bin/compose.yml
+      - /var/run/docker.sock:/var/run/docker.sock
+    secrets:
+      - pubkey
+volumes:
+  # The `db-data` volume persists the database data between container restarts.
+  db-data:
+secrets:
+  # The `db-password` secret is used to set the database password.
+  db-password:
+    file: secrets/mongo-password.txt
+  node-env:
+    file: secrets/node-env.txt
+  pubkey:
+    file: cd_public.pem
