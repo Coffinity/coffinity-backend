@@ -18,7 +18,7 @@ export const createOrderHandler: RequestHandler<
     return res.status(201).json(order.toJSON()).end();
   } catch (err) {
     if (err instanceof Error) {
-      return res.status(409).json({ message: err.message });
+      return res.status(400).json({ message: err.message });
     }
     return res.status(500).json({ message: "internal server error" });
   }
