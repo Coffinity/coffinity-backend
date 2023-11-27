@@ -32,7 +32,7 @@ const mineRouter = express.Router();
 const jwtMiddleware = new JWTMiddleware();
 
 app.get("/", (req, res) => {
-  return res.status(200).send("Hello world").end();
+  return res.status(200).send("Hello").end();
 });
 
 // Auth
