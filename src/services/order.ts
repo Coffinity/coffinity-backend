@@ -1,54 +1,57 @@
-import { ICreateOrderDTO } from "../dto/order";
+import { IAddress, ICreateOrderDTO } from "../dto/order";
 import { IOrder } from "../interfaces/user";
 import OrderModel from "../models/order";
 import ProductModel from "../models/product";
 
-export async function createOrder(userId: string, input: ICreateOrderDTO) {
-  const { items } = input;
-  let total = 0;
-
-  const productIdArr = items.map((item) => {
-    return item.productId;
-  });
-
-  const productList = await ProductModel.find({ _id: { $in: productIdArr } });
-  const productDetail = productList.map((product) => {
-    return {
-      id: product.id,
-      name: product.name,
-      description: product.description,
-      image: product.image,
-      price: product.price,
-      quantity: 0,
-    };
-  });
-
-  productDetail.map((product) => {
-    items.map((item) => {
-      if (item.productId === product.id) {
-        product.quantity = item.quantity;
-        total += product.price * product.quantity;
-      }
-    });
-  });
+export async function createOrder(
+  userId: string,
+  total: number,
+  newOrders: {
+    name: string;
+    description: string;
+    image: string;
+    price: number;
+    quantity: number;
+  }[],
+  address: IAddress,
+  session_id: string,
+  order_id: string,
+  status?: string
+) {
   try {
-    const newOrder = productDetail.map((item) => {
-      return {
-        name: item.name,
-        description: item.description,
-        image: item.image,
-        price: item.price,
-        quantity: item.quantity,
-      };
-    });
     const orderResult = {
       userId: userId,
       total: total,
-      items: newOrder,
+      address: address,
+      order_id,
+      session_id,
+      status,
+      items: newOrders,
     };
     const order = await OrderModel.create(orderResult);
     return order;
   } catch (err) {
     throw err;
+  }
+}
+
+export async function getOrderByOrderId(orderId: string) {
+  try {
+    const order = await OrderModel.findOne({ order_id: orderId });
+    return order;
+  } catch (error) {
+    throw error;
+  }
+}
+export async function updateSessionId(sessionId: string, status: string) {
+  try {
+    const order = await OrderModel.findOneAndUpdate(
+      { session_id: sessionId },
+      { status: status },
+      { new: true }
+    );
+    return order;
+  } catch (error) {
+    throw error;
   }
 }

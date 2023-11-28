@@ -12,11 +12,21 @@ const orderSchema = new mongoose.Schema({
       quantity: { type: Number, required: true },
     },
   ],
+  address: {
+    fullname: { type: String, required: true },
+    address_line: { type: String, required: true },
+    province: { type: String, required: true },
+    district: { type: String, required: true },
+    postcode: { type: String, required: true },
+    phone_number: { type: String, required: true },
+  },
+  order_id: { type: String, required: true },
   total: Number,
   status: {
     type: String,
     default: "pending",
   },
+  session_id: { type: String, required: true },
 });
 
 const OrderModel = mongoose.model<IOrder>("Order", orderSchema);
