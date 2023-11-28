@@ -1,4 +1,5 @@
 import mongoose, { Document } from "mongoose";
+import { IAddress } from "../dto/order";
 
 interface IUser {
   username: string;
@@ -17,23 +18,11 @@ export interface IOrder {
     price: number;
     quantity: number;
   }[];
+  address: IAddress;
+  order_id: string;
   total: number;
   status: string;
-}
-interface ICart {
-  items: {
-    productId: mongoose.Types.ObjectId;
-    size: string;
-    quantity: number;
-  }[];
-  total: number;
-}
-
-interface IAddress {
-  address_line: string;
-  province: string;
-  district: string;
-  postcode: string;
+  session_id: string;
 }
 
 export interface UserDocument extends IUser, Document {
