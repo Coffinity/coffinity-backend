@@ -1,11 +1,11 @@
 version: "3.8"
 services:
   webpage:
-    image: peetwerapat/coffinity-web:0.0.2
+    image: ${DOCKERHUB_USERNAME}/${PROJECT_NAME}-web:main-c597a47
     ports:
       - 80:80
   api:
-    image: ${DOCKERHUB_USERNAME}/${PROJECT_NAME}-api:0.0.1
+    image: ${DOCKERHUB_USERNAME}/${PROJECT_NAME}-api:main-aa673d9
     secrets:
       - source: node-env
         target: /app/.env
@@ -27,21 +27,21 @@ services:
       - db-data:/data/db
     secrets:
       - db-password
-  # deployer:
-  #   image: cloudiana/compose-deployment:0.0.5
-  #   ports:
-  #     - 3000:3000
-  #   environment:
-  #     - CD_HOST_COMPOSE_WORKING_DIR=${PRODUCTION_DIR}
-  #     - CD_DEPLOY_INTERVAL_SECONDS=30
-  #   env_file:
-  #     - .env.prod
-  #   volumes:
-  #     - .env.prod:${PRODUCTION_DIR}/.env.prod
-  #     - ./compose.yml:/bin/compose.yml
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #   secrets:
-  #     - pubkey
+  deployer:
+    image: cloudiana/compose-deployment:0.0.5
+    ports:
+      - 3000:3000
+    environment:
+      - CD_HOST_COMPOSE_WORKING_DIR=${PRODUCTION_DIR}
+      - CD_DEPLOY_INTERVAL_SECONDS=120
+    env_file:
+      - .env.prod
+    volumes:
+      - .env.prod:${PRODUCTION_DIR}/.env.prod
+      - ./compose.yml:/bin/compose.yml
+      - /var/run/docker.sock:/var/run/docker.sock
+    secrets:
+      - pubkey
 volumes:
   # The `db-data` volume persists the database data between container restarts.
   db-data:
