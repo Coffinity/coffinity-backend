@@ -1,5 +1,4 @@
-import { Document, Types } from "mongoose";
-import { ProductDocument } from "../interfaces/product";
+import { IProductSrv } from "../services/types";
 
 export interface ICreateProductDTO {
   name: string;
@@ -30,33 +29,18 @@ export interface IProductDTO {
   updatedAt: Date;
 }
 
-export const toProductDTO = (
-  product: Document<unknown, {}, ProductDocument> &
-    ProductDocument & {
-      _id: Types.ObjectId;
-    }
-) => {
-  const {
-    _id,
-    name,
-    description,
-    image,
-    type,
-    price,
-    stockQuantity,
-    createdAt,
-    updatedAt,
-  } = product;
+export const toProductDTO = (product: IProductSrv): IProductDTO => {
   const productDTO: IProductDTO = {
-    id: _id.toString(),
-    name,
-    description,
-    image,
-    type,
-    price,
-    stockQuantity,
-    createdAt,
-    updatedAt,
+    id: product.id,
+    name: product.name,
+    description: product.description,
+    type: product.type,
+    image: product.image,
+    price: product.price,
+    stockQuantity: product.stockQuantity,
+    createdAt: product.createdAt,
+    updatedAt: product.updatedAt,
   };
+
   return productDTO;
 };

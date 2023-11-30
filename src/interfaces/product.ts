@@ -1,3 +1,5 @@
+import { Document } from "mongoose";
+
 interface IProduct {
   name: string;
   description: string;

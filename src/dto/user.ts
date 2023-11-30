@@ -1,3 +1,5 @@
+import { IUserSrv } from "../services/types";
+
 export interface IUserDTO {
   id: string;
   username: string;
@@ -19,3 +21,13 @@ export interface ILogin {
 export interface IAccessToken {
   accessToken: string;
 }
+
+export const toUserDTO = (user: IUserSrv): IUserDTO => {
+  const userDTO: IUserDTO = {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    createdAt: user.createdAt,
+  };
+  return userDTO;
+};

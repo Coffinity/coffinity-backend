@@ -1,55 +1,135 @@
-version: "3.8"
+name: production
 services:
-  webpage:
-    image: ${DOCKERHUB_USERNAME}/${PROJECT_NAME}-web:main-c597a47
-    ports:
-      - 80:80
   api:
-    image: ${DOCKERHUB_USERNAME}/${PROJECT_NAME}-api:main-aa673d9
-    secrets:
-      - source: node-env
-        target: /app/.env
-    ports:
-      - 8080:8080
-    # `depends_on` tells Docker Compose to start the database before your application.
     depends_on:
       db:
         condition: service_started
-  db:
-    image: mongo
-    restart: always
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: coffinity
-      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/db-password
-    expose:
-      - 27017
-    volumes:
-      - db-data:/data/db
-    secrets:
-      - db-password
-  deployer:
-    image: cloudiana/compose-deployment:0.0.5
+        required: true
+    image: brightnc/coffinity-api:main-2891cf5
+    labels:
+      com.docker.compose.oneoff: "False"
+      com.docker.compose.project: production
+      com.docker.compose.service: api
+      com.pose.soy.deployment: "True"
+    networks:
+      default: null
     ports:
-      - 3000:3000
-    environment:
-      - CD_HOST_COMPOSE_WORKING_DIR=${PRODUCTION_DIR}
-      - CD_DEPLOY_INTERVAL_SECONDS=120
-    env_file:
-      - .env.prod
-    volumes:
-      - .env.prod:${PRODUCTION_DIR}/.env.prod
-      - ./compose.yml:/bin/compose.yml
-      - /var/run/docker.sock:/var/run/docker.sock
+      - mode: ingress
+        target: 8080
+        published: "8080"
+        protocol: tcp
     secrets:
-      - pubkey
+      - source: node-env
+        target: /app/.env
+  db:
+    environment:
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/db-password
+      MONGO_INITDB_ROOT_USERNAME: coffinity
+    expose:
+      - "27017"
+    image: mongo
+    labels:
+      com.docker.compose.oneoff: "False"
+      com.docker.compose.project: production
+      com.docker.compose.service: db
+      com.pose.soy.deployment: "True"
+    networks:
+      default: null
+    restart: always
+    secrets:
+      - source: db-password
+    volumes:
+      - type: volume
+        source: db-data
+        target: /data/db
+        volume: {}
+  deployer:
+    environment:
+      CD_DEPLOY_INTERVAL_SECONDS: "120"
+      CD_HOST_COMPOSE_WORKING_DIR: /home/admin/production
+      DOCKERHUB_USERNAME: brightnc
+      PRODUCTION_DIR: /home/admin/production
+      PROJECT_NAME: coffinity
+      STRIPE_API_KEY: sk_test_51LUYggA40BmlYgxqzX3jEK1z4Ca9bCYkoKNgO1pW0xvB2l5mlikMlRl3s265IHY4vpib0bSRBXVscZ5U0InzseRd00rRfMDD8q
+    env_file:
+      - /home/admin/production/.env.prod
+    image: cloudiana/compose-deployment:0.0.5
+    labels:
+      com.docker.compose.oneoff: "False"
+      com.docker.compose.project: production
+      com.docker.compose.service: deployer
+      com.pose.soy.deployment: "True"
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 3000
+        published: "3000"
+        protocol: tcp
+    secrets:
+      - source: pubkey
+    volumes:
+      - type: bind
+        source: /home/admin/production/.env.prod
+        target: /home/admin/production/.env.prod
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/admin/production/compose.yml
+        target: /bin/compose.yml
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+        bind:
+          create_host_path: true
+  stripe-hook:
+    command:
+      - listen
+      - --api-key
+      - sk_test_51LUYggA40BmlYgxqzX3jEK1z4Ca9bCYkoKNgO1pW0xvB2l5mlikMlRl3s265IHY4vpib0bSRBXVscZ5U0InzseRd00rRfMDD8q
+      - --forward-to
+      - http://api:8080/webhook
+    image: stripe/stripe-cli
+    labels:
+      com.docker.compose.oneoff: "False"
+      com.docker.compose.project: production
+      com.docker.compose.service: stripe-hook
+      com.pose.soy.deployment: "True"
+    networks:
+      default: null
+  webpage:
+    image: brightnc/coffinity-web:main-a690076
+    labels:
+      com.docker.compose.oneoff: "False"
+      com.docker.compose.project: production
+      com.docker.compose.service: webpage
+      com.pose.soy.deployment: "True"
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 80
+        published: "80"
+        protocol: tcp
+networks:
+  default:
+    name: production_default
+    labels:
+      com.docker.compose.network: default
+      com.docker.compose.project: production
+      com.docker.compose.version: ""
 volumes:
-  # The `db-data` volume persists the database data between container restarts.
   db-data:
+    name: production_db-data
 secrets:
-  # The `db-password` secret is used to set the database password.
   db-password:
-    file: secrets/mongo-password.txt
+    name: production_db-password
+    file: /home/admin/production/secrets/mongo-password.txt
   node-env:
-    file: secrets/node-env.txt
+    name: production_node-env
+    file: /home/admin/production/secrets/node-env.txt
   pubkey:
-    file: cd_public.pem
+    name: production_pubkey
+    file: /home/admin/production/cd_public.pem

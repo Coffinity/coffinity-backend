@@ -1,79 +1,67 @@
-import { omit } from "lodash";
-import { ICreateUserDTO } from "../dto/user";
-import UserModel from "../models/user";
-import CartModel from "../models/cart";
+import { sign } from "jsonwebtoken";
+import { IUserRepository } from "../repositories/interface";
+import { IUserService } from "./interface";
+import { ICreateUserSrv, IUserSrv } from "./types";
 
-export async function createUser(input: ICreateUserDTO) {
-  try {
-    const user = await UserModel.create(input);
-    return omit(user.toJSON(), "password");
-  } catch (err) {
-    throw err;
+export default class UserService implements IUserService {
+  private userRepo: IUserRepository;
+  constructor(userRepo: IUserRepository) {
+    this.userRepo = userRepo;
   }
-}
-
-export async function findByUserId(userId: string) {
-  try {
-    const user = await UserModel.findById({ _id: userId });
-    if (!user) {
-      throw new Error("username not found");
+  createUser: IUserService["createUser"] = async (newUser: ICreateUserSrv) => {
+    try {
+      const user = await this.userRepo.createUser(newUser);
+      const result: IUserSrv = {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        createdAt: user.createdAt,
+      };
+      return result;
+    } catch (error) {
+      throw error;
     }
-    return user;
-  } catch (error) {
-    throw error;
-  }
-}
+  };
+  login: IUserService["login"] = async (
+    username: string,
+    inputPassword: string
+  ) => {
+    try {
+      const user = await this.userRepo.findByUsername(username);
+      const userId: string = user.id;
+      const isAdmin: boolean = user.isAdmin;
 
-export async function findByUsername(username: string) {
-  try {
-    const user = await UserModel.findOne({ username: username });
-    if (!user) {
-      throw new Error("username not found");
-    }
-    return user;
-  } catch (error) {
-    throw error;
-  }
-}
-
-export async function updateCart(
-  userId: string,
-  productId: string,
-  quantity: number
-) {
-  try {
-    const updatedCart = await CartModel.findOneAndUpdate(
-      { userId, "items.productId": productId },
-      { $set: { "items.$.quantity": quantity } },
-      { new: true }
-    ).populate("items.productId", "name");
-
-    if (!updatedCart) {
-      // If the product doesn't exist in the cart, add it
-      const newCartItem = { productId, quantity };
-      const newCart = await CartModel.findOneAndUpdate(
-        { userId },
-        { $addToSet: { items: newCartItem } },
-        { new: true, upsert: true }
+      const isOk = user.comparePassword(inputPassword);
+      if (!isOk) {
+        throw new Error("wrong username or password");
+      }
+      const accessToken = sign(
+        { userId, isAdmin },
+        process.env.JWT_SECRET as string,
+        {
+          algorithm: "HS512",
+          expiresIn: "12h",
+          issuer: "DHAMAJATI",
+          subject: "user-credential",
+        }
       );
-
-      return newCart;
+      return accessToken;
+    } catch (error) {
+      throw error;
     }
-    return updatedCart;
-  } catch (error) {
-    throw error;
-  }
-}
-
-export async function getUserCart(userId: string) {
-  try {
-    const userCart = await CartModel.findOne({ userId }).populate({
-      path: "items.productId",
-      select: "name description image type",
-    });
-
-    return userCart;
-  } catch (error) {
-    throw error;
-  }
+  };
+  findById: IUserService["findById"] = async (id: string) => {
+    try {
+      const user = await this.userRepo.findById(id);
+      const result: IUserSrv = {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        createdAt: user.createdAt,
+      };
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  };
 }
