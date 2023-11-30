@@ -8,7 +8,7 @@ export interface ICreateOrderDTO {
   address: IAddress;
 }
 export interface IAddress {
-  fullname: string;
+  fullName: string;
   address_line: string;
   province: string;
   district: string;
@@ -22,12 +22,11 @@ export interface IOrderDTO {
     name: string;
     description: string;
     image: string;
-    type: string;
     price: number;
     quantity: number;
   }[];
   total: number;
-  status: string;
+  status: string | undefined;
 }
 
 export interface ICheckoutSuccessResponse {

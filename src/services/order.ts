@@ -1,57 +1,77 @@
-import { IAddress, ICreateOrderDTO } from "../dto/order";
-import { IOrder } from "../interfaces/user";
-import OrderModel from "../models/order";
-import ProductModel from "../models/product";
+import { IOrderRepository } from "../repositories/interface";
+import { ICreateOrder } from "../repositories/types";
+import { IOrderService } from "./interface";
+import { IOrderSrv } from "./types";
 
-export async function createOrder(
-  userId: string,
-  total: number,
-  newOrders: {
-    name: string;
-    description: string;
-    image: string;
-    price: number;
-    quantity: number;
-  }[],
-  address: IAddress,
-  session_id: string,
-  order_id: string,
-  status?: string
-) {
-  try {
-    const orderResult = {
-      userId: userId,
-      total: total,
-      address: address,
-      order_id,
-      session_id,
-      status,
-      items: newOrders,
+export default class OrderService implements IOrderService {
+  private orderRepo: IOrderRepository;
+  constructor(orderRepo: IOrderRepository) {
+    this.orderRepo = orderRepo;
+  }
+
+  createOrder: IOrderService["createOrder"] = async (newOrder) => {
+    const order: ICreateOrder = {
+      userId: newOrder.userId,
+      total: newOrder.total,
+      items: newOrder.items,
+      address: newOrder.address,
+      session_id: newOrder.session_id,
+      order_id: newOrder.order_id,
+      status: newOrder.status,
     };
-    const order = await OrderModel.create(orderResult);
-    return order;
-  } catch (err) {
-    throw err;
-  }
-}
 
-export async function getOrderByOrderId(orderId: string) {
-  try {
-    const order = await OrderModel.findOne({ order_id: orderId });
-    return order;
-  } catch (error) {
-    throw error;
-  }
-}
-export async function updateSessionId(sessionId: string, status: string) {
-  try {
-    const order = await OrderModel.findOneAndUpdate(
-      { session_id: sessionId },
-      { status: status },
-      { new: true }
-    );
-    return order;
-  } catch (error) {
-    throw error;
-  }
+    const result = await this.orderRepo.createOrder(order);
+    const orderResult: IOrderSrv = {
+      id: result.id,
+      userId: result.userId,
+      address: result.address,
+      items: result.items,
+      total: result.total,
+      order_id: result.order_id,
+      session_id: result.session_id,
+      status: result.status,
+    };
+    return orderResult;
+  };
+
+  getOrderByOrderId: IOrderService["getOrderByOrderId"] = async (id) => {
+    try {
+      const result = await this.orderRepo.getByOrderId(id);
+      const orderResult: IOrderSrv = {
+        id: result.id,
+        userId: result.userId,
+        address: result.address,
+        items: result.items,
+        total: result.total,
+        order_id: result.order_id,
+        session_id: result.session_id,
+        status: result.status,
+      };
+      return orderResult;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  updateSessionId: IOrderService["updateSessionId"] = async (
+    sessionId,
+    status
+  ) => {
+    try {
+      const result = await this.orderRepo.updateSessionId(sessionId, status);
+      const orderResult: IOrderSrv = {
+        id: result.id,
+        userId: result.userId,
+        address: result.address,
+        items: result.items,
+        total: result.total,
+        order_id: result.order_id,
+        session_id: result.session_id,
+        status: result.status,
+      };
+      return orderResult;
+    } catch (error) {
+      throw error;
+    }
+  };
 }

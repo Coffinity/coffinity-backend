@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { IOrder } from "../interfaces/user";
+import { OrderDocument } from "../interfaces/order";
 
 const orderSchema = new mongoose.Schema(
   {
@@ -14,7 +14,7 @@ const orderSchema = new mongoose.Schema(
       },
     ],
     address: {
-      fullname: { type: String, required: true },
+      fullName: { type: String, required: true },
       address_line: { type: String, required: true },
       province: { type: String, required: true },
       district: { type: String, required: true },
@@ -32,6 +32,6 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const OrderModel = mongoose.model<IOrder>("Order", orderSchema);
+const OrderModel = mongoose.model<OrderDocument>("Order", orderSchema);
 
 export default OrderModel;
