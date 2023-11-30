@@ -23,7 +23,7 @@ export default class ProductService implements IProductService {
       }
       const productWithImageUploaded: ICreateProductSrv = {
         name: newProduct.name,
-        image: uploadResponse.url,
+        image: uploadResponse.secure_url,
         description: newProduct.description,
         price: newProduct.price,
         type: newProduct.type,
